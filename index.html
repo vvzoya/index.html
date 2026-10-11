@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0">
+<title>光遇藏宝阁议价计算器</title>
+<style>
+*{box-sizing:border-box;font-family:system-ui, sans-serif;}
+body{max-width:600px;margin:20px auto;padding:0 12px;background:#f7f8fa;color:#222;}
+.card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 12px #00000014;}
+h1{font-size:18px;margin-top:0;}
+.input-row{margin:16px 0;}
+label{display:block;margin-bottom:6px;font-weight:500;}
+input{width:100%;padding:12px 12px;font-size:18px;border:1px solid #dcdfe6;border-radius:8px;}
+button{width:100%;padding:12px 18px;background:#407bff;color:#fff;border:none;border-radius:8px;font-size:17px;cursor:pointer;}
+.result{margin-top:20px;padding:16px;background:#f4f7ff;border-radius:8px;line-height:1.8;font-size:16px;}
+.note{margin-top:16px;font-size:13px;color:#666;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="card">
+    <h1>光遇藏宝阁议价计算器</h1>
+    <p>开启允许议价（最低可砍至挂牌价80%），保证被砍到最低8折时，卖家达到目标到手。手续费8%，手续费遇厘向上进分。</p>
+
+    <div class="input-row">
+        <label>卖家目标到手金额（元）</label>
+        <input id="target" type="number" step="0.01" placeholder="例如 2500">
+    </div>
+
+    <button onclick="calc()">计算登记标价</button>
+
+    <div class="result" id="res" style="display:none;">
+        <div>✅ <b>推荐藏宝阁登记标价：</b><span id="priceP"></span> 元</div>
+        <div>📉 最低8折后订单成交价：<span id="priceO"></span> 元</div>
+        <div>💰 8折成交时卖家到手：<span id="get8"></span> 元</div>
+        <div>💎 买家原价拍下，卖家到手：<span id="getFull"></span> 元</div>
+    </div>
+
+    <div class="note">
+        <p>⚠说明：</p>
+        <ul style="padding-left:18px;margin:4px 0;">
+            <li>本表前提：开启【允许议价】，议价下限80%</li>
+            <li>保证最坏情况（砍到8折）达到目标到手；高于8折成交，到手会更多</li>
+            <li>手续费规则：手续费出现厘，向上进1分钱；订单金额舍弃厘</li>
+            <li>不开议价不要使用本工具；不开议价公式：标价=目标到手÷0.92</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+/**
+ * 模拟：手续费向上进分
+ */
+function ceilCent(num){
+    return Math.ceil(num * 100) / 100;
+}
+/**
+ * 截断保留两位小数，舍弃厘，不是四舍五入
+ */
+function floorCent(num){
+    return Math.floor(num * 100) / 100;
+}
+
+function calc(){
+    const S = parseFloat(document.getElementById('target').value);
+    if(isNaN(S) || S <=0){
+        alert("请输入有效的大于0的到手金额");
+        return;
+    }
+    // 理论初始P
+    let P = S / 0.92 / 0.8;
+    P = ceilCent(P); //向上取分作为候选
+
+    let ok = false;
+    let O,F,receive;
+    //迭代验算
+    for(let i=0;i<20;i++){
+        O = floorCent(P * 0.8); //8折后，截断舍弃厘
+        const fTheory = O * 0.08;
+        F = ceilCent(fTheory); //手续费向上进分
+        receive = O - F;
+        if(receive >= S - 0.001){
+            ok = true;
+            break;
+        }
+        P += 0.01;
+    }
+
+    //原价拍下到手
+    const fFull = ceilCent(P * 0.08);
+    const receiveFull = P - fFull;
+
+    document.getElementById('res').style.display='block';
+    document.getElementById('priceP').innerText = P.toFixed(2);
+    document.getElementById('priceO').innerText = O.toFixed(2);
+    document.getElementById('get8').innerText = receive.toFixed(2);
+    document.getElementById('getFull').innerText = receiveFull.toFixed(2);
+}
+</script>
+</body>
+</html>
